@@ -1,0 +1,49 @@
+fileptr = outfile("/home/caduser1/PSO_compound/delay_file_cell1.dat")
+
+inp = infile("/home/caduser1/PSO_compound/width_delay_file_cell1.dat")
+fscanf(inp "%g %g %g %g %g %g %g %g" w1 w2 w3 w4 w5 w6 w7 w8)
+
+
+simulator( 'spectre )
+design(	 "/home/caduser1/simulation/cell1/spectre/schematic/netlist/netlist")
+resultsDir( "/home/caduser1/simulation/cell1/spectre/schematic" )
+modelFile( 
+    '("/mnt/cadence_tools/gpdk045_v_6_0/gpdk045/../models/spectre/gpdk045.scs" "mc")
+)
+analysis('tran ?stop "100u"  )
+desVar(	  "w1" 2u	)
+desVar(	  "w2" 2u	)
+desVar(	  "w3" 2u	)
+desVar(	  "w4" 2u	)
+desVar(	  "w5" 1u	)
+desVar(	  "w6" 1u	)
+desVar(	  "w7" 1u	)
+desVar(	  "w8" 1u	)
+envOption(
+	'analysisOrder  list("tran") 
+)
+save( 'v "/A" "/B" "/C" "/D" "/out" )
+temp( 27 ) 
+run()
+selectResult( 'tran )
+plot(getData("/A") getData("/B") getData("/C") getData("/D") getData("/out") )
+delay = abs(delay(?wf1 v("/out" ?result "tran") ?value1 0.5 ?edge1 "rising" ?nth1 1 ?td1 1e-05 ?tol1 nil ?wf2 v("/D" ?result "tran") ?value2 0.5 ?edge2 "falling" ?nth2 1 ?tol2 nil ?td2r0 1e-05 ?stop nil ?multiple nil))
+plot( delay ?expr '( "delay" ) )
+
+inst_power = i("/V1/PLUS" ?result "tran")
+plot( inst_power ?expr '( "inst_power" ) )
+
+pos_power = abs(inst_power)
+plot( pos_power ?expr '( "pos_power" ) )
+
+power = iinteg(pos_power)
+plot( energy ?expr '( "energy" ) )
+
+get_max_power = ymax(power)
+plot( get_max_energy ?expr '( "get_max_energy" ) )
+
+
+fprintf(fileptr "%e\n" get_max_power)
+close(fileptr)
+exit
+
